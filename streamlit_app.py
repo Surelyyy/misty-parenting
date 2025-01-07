@@ -105,8 +105,6 @@ def test_connection(ip_address):
         logging.error(f"Unexpected error during connection test: {e}")
         return False
 
-
-
 # Connect to Misty
 if not st.session_state["connected"]:
     ip_address = st.text_input("Enter Misty II's IP address:", placeholder="192.168.x.x", key="ip_input")
@@ -157,7 +155,7 @@ if st.session_state.get("connected"):
         
                         # Preprocess image and predict
                         processed_image = preprocess_image(image)
-                        predicted_number, confidence = predict_number_with_confidence(tflite_model, processed_image)
+                        predicted_number, confidence = predict_number(tflite_model, processed_image)
         
                         if predicted_number is not None:
                             prediction_placeholder.subheader(f"Prediction: {predicted_number} (Confidence: {confidence:.2f})")
@@ -178,4 +176,3 @@ if st.session_state.get("connected"):
                     time.sleep(max(0, 0.1 - elapsed_time))  # Adjust delay for 10 FPS
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-        
