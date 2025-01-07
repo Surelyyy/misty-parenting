@@ -5,6 +5,8 @@ import tensorflow.lite as tflite
 from PIL import Image
 import io
 import time
+import logging
+
 
 # Define Misty's API endpoints
 def misty_speak(ip_address, text):
