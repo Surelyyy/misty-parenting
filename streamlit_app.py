@@ -90,9 +90,16 @@ def test_connection(ip_address):
         else:
             logging.warning(f"Connection test returned status code: {response.status_code}")
             return False
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error during connection test: {e}")
+    except requests.ConnectionError as e:
+        logging.error(f"ConnectionError: Unable to connect to Misty at {url}. Error: {e}")
         return False
+    except requests.Timeout as e:
+        logging.error(f"TimeoutError: Misty at {url} did not respond in time. Error: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"Unexpected error during connection test: {e}")
+        return False
+
 
 # Connect to Misty
 if not st.session_state["connected"]:
