@@ -79,14 +79,19 @@ if "ip_address" not in st.session_state:
 
 # Define a function to test the connection to Misty using the root URL
 def test_connection(ip_address):
-    """Test connection to Misty's base URL."""
-    url = f"http://{ip_address}/"
+    """Test connection to Misty's device API."""
+    url = f"http://{ip_address}/api/device"
     try:
         logging.debug(f"Testing connection to Misty at {url}")
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            logging.info("Successfully connected to Misty.")
-            return True
+            data = response.json()
+            if data.get("status") == "Success":
+                logging.info("Successfully connected to Misty.")
+                return True
+            else:
+                logging.warning("Misty responded, but status is not 'Success'.")
+                return False
         else:
             logging.warning(f"Connection test returned status code: {response.status_code}")
             return False
@@ -99,6 +104,7 @@ def test_connection(ip_address):
     except Exception as e:
         logging.error(f"Unexpected error during connection test: {e}")
         return False
+
 
 
 # Connect to Misty
