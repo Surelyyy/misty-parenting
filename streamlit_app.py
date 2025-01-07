@@ -1,11 +1,10 @@
-
 import streamlit as st
 import requests
 import numpy as np
 import tensorflow.lite as tflite
-import time
 from PIL import Image
 import io
+import time
 
 # Define a function to test connection with Misty II
 def test_connection(ip_address):
@@ -47,6 +46,13 @@ def load_tflite_model(model_path):
         st.error(f"Failed to load model: {e}")
         return None
 
+def preprocess_image(image):
+    """Preprocess the image for TFLite model."""
+    resized_image = image.resize((28, 28)).convert("L")  # Resize and convert to grayscale
+    normalized_image = np.array(resized_image) / 255.0  # Normalize pixel values
+    reshaped_image = normalized_image.reshape(1, 28, 28, 1).astype(np.float32)  # Add batch dimension
+    return reshaped_image
+
 def predict_number(interpreter, image_data):
     """Predict number using TFLite model."""
     input_details = interpreter.get_input_details()
@@ -58,7 +64,7 @@ def predict_number(interpreter, image_data):
     return np.argmax(output_data)
 
 # Initialize Streamlit App
-st.title("Misty II Learning Module")
+st.title("Misty II Real-Time Number Recognition")
 
 # Initialize session state
 if "connected" not in st.session_state:
@@ -78,7 +84,7 @@ if not st.session_state["connected"]:
         else:
             st.error("Failed to connect to Misty. Check the IP address.")
 
-# Learning Module
+# Real-Time Prediction
 if st.session_state.get("connected"):
     st.subheader(f"Connected to Misty II at {st.session_state['ip_address']}")
 
@@ -87,35 +93,43 @@ if st.session_state.get("connected"):
     tflite_model = load_tflite_model(model_path)
 
     if tflite_model is not None:
-        # Level 1: Number Recognition
-        st.header("Learning Module: Level 1 - Number Recognition")
-        random_number = np.random.randint(1, 10)
-        text_instruction = f"Can you show me number {random_number}?"
-        misty_speak(st.session_state["ip_address"], text_instruction)
+        st.header("Real-Time Number Recognition")
 
-        st.write(text_instruction)
+        # Placeholder for dynamic updates
+        result_placeholder = st.empty()
+        frame_placeholder = st.empty()
 
-        # Real-Time Image Capture and Prediction
-        if st.button("Capture Image", key="capture_button"):
-            image_data = capture_image(st.session_state["ip_address"])
-            if image_data:
-                # Display captured image
-                image = Image.open(io.BytesIO(image_data))
-                st.image(image, caption="Captured Image from Misty", use_column_width=True)
+        # Start real-time capture and prediction
+        if st.button("Start Real-Time Recognition"):
+            try:
+                random_number = np.random.randint(1, 10)
+                text_instruction = f"Can you show me number {random_number}?"
+                misty_speak(st.session_state["ip_address"], text_instruction)
+                st.write(text_instruction)
 
-                # Preprocess image for TFLite model
-            
-                # Replace this with the actual preprocessing logic for your model
-                processed_image = np.array(image.resize((28, 28)).convert("L")) / 255.0
-                processed_image = processed_image.reshape(1, 28, 28, 1).astype(np.float32)
+                # Process frames at 10 FPS
+                while True:
+                    start_time = time.time()
+                    image_data = capture_image(st.session_state["ip_address"])
+                    if image_data:
+                        # Display captured image
+                        image = Image.open(io.BytesIO(image_data))
+                        frame_placeholder.image(image, caption="Captured Image", use_column_width=True)
 
-                predicted_number = predict_number(tflite_model, processed_image)
-                st.write(f"Misty recognized the number: {predicted_number}")
+                        # Preprocess image and predict
+                        processed_image = preprocess_image(image)
+                        predicted_number = predict_number(tflite_model, processed_image)
+                        result_placeholder.write(f"Misty recognized the number: {predicted_number}")
 
-                if predicted_number == random_number:
-                    st.success("Correct! Moving to Level 2.")
-                    # Implement Level 2 here
-                else:
-                    st.error("Incorrect. Try again!")
-            else:
-                st.error("Failed to capture image. Ensure Misty's camera is functioning.")
+                        if predicted_number == random_number:
+                            result_placeholder.success("Correct! Moving to the next number.")
+                            random_number = np.random.randint(1, 10)
+                            text_instruction = f"Can you show me number {random_number}?"
+                            misty_speak(st.session_state["ip_address"], text_instruction)
+                            st.write(text_instruction)
+
+                    # Maintain 10 FPS
+                    elapsed_time = time.time() - start_time
+                    time.sleep(max(0, 0.1 - elapsed_time))  # Adjust delay for 10 FPS
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
