@@ -1,11 +1,7 @@
 import streamlit as st
 import requests
-import numpy as np
-import tensorflow.lite as tflite
-from PIL import Image
-import io
-import time
 import logging
+import time
 
 
 # Define Misty's API endpoints
@@ -30,42 +26,29 @@ def capture_image(ip_address):
     except requests.exceptions.RequestException:
         return None
 
-def load_tflite_model(model_path):
-    """Load TFLite model."""
+# Define a function to test the connection to Misty using the root URL
+def test_connection(ip_address):
+    """Test connection to Misty's device API."""
+    url = f"http://{ip_address}/api/device"
     try:
-        interpreter = tflite.Interpreter(model_path=model_path)
-        interpreter.allocate_tensors()
-        return interpreter
-    except Exception as e:
-        st.error(f"Failed to load model: {e}")
-        return None
-
-def preprocess_image(image):
-    """Preprocess the image for TFLite model."""
-    resized_image = image.resize((28, 28)).convert("L")  # Resize and convert to grayscale
-    normalized_image = np.array(resized_image) / 255.0  # Normalize pixel values
-    reshaped_image = normalized_image.reshape(1, 28, 28, 1).astype(np.float32)  # Add batch dimension
-    return reshaped_image
-
-def predict_number(interpreter, image_data):
-    """Predict number using TFLite model with confidence filtering."""
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-
-    # Set input tensor and invoke the interpreter
-    interpreter.set_tensor(input_details[0]['index'], image_data)
-    interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])  # Confidence scores for each class
-
-    # Find the class with the highest confidence
-    max_confidence = np.max(output_data)
-    predicted_class = np.argmax(output_data)
-
-    # Filter by confidence level (80%)
-    if max_confidence >= 0.8:
-        return predicted_class, max_confidence
-    else:
-        return None, max_confidence
+        logging.debug(f"Testing connection to Misty at {url}")
+        response = requests.get(url, timeout=10)  # Increased timeout to 10 seconds
+        logging.debug(f"Response Status: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            logging.debug(f"Response JSON: {data}")
+            if data.get("status") == "Success":
+                logging.info("Successfully connected to Misty.")
+                return True
+            else:
+                logging.warning("Misty responded, but status is not 'Success'.")
+                return False
+        else:
+            logging.warning(f"Connection test returned status code: {response.status_code}")
+            return False
+    except requests.exceptions.RequestException as e:
+        logging.error(f"RequestException: {e}")
+        return False
 
 
 # Initialize Streamlit App
@@ -76,34 +59,6 @@ if "connected" not in st.session_state:
     st.session_state["connected"] = False
 if "ip_address" not in st.session_state:
     st.session_state["ip_address"] = ""
-
-# Define a function to test the connection to Misty using the root URL
-def test_connection(ip_address):
-    """Test connection to Misty's device API."""
-    url = f"http://{ip_address}/api/device"
-    try:
-        logging.debug(f"Testing connection to Misty at {url}")
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == "Success":
-                logging.info("Successfully connected to Misty.")
-                return True
-            else:
-                logging.warning("Misty responded, but status is not 'Success'.")
-                return False
-        else:
-            logging.warning(f"Connection test returned status code: {response.status_code}")
-            return False
-    except requests.ConnectionError as e:
-        logging.error(f"ConnectionError: Unable to connect to Misty at {url}. Error: {e}")
-        return False
-    except requests.Timeout as e:
-        logging.error(f"TimeoutError: Misty at {url} did not respond in time. Error: {e}")
-        return False
-    except Exception as e:
-        logging.error(f"Unexpected error during connection test: {e}")
-        return False
 
 # Connect to Misty
 if not st.session_state["connected"]:
@@ -155,7 +110,7 @@ if st.session_state.get("connected"):
         
                         # Preprocess image and predict
                         processed_image = preprocess_image(image)
-                        predicted_number, confidence = predict_number(tflite_model, processed_image)
+                        predicted_number, confidence = predict_number_with_confidence(tflite_model, processed_image)
         
                         if predicted_number is not None:
                             prediction_placeholder.subheader(f"Prediction: {predicted_number} (Confidence: {confidence:.2f})")
