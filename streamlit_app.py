@@ -46,14 +46,25 @@ def preprocess_image(image):
     return reshaped_image
 
 def predict_number(interpreter, image_data):
-    """Predict number using TFLite model."""
+    """Predict number using TFLite model with confidence filtering."""
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
+    # Set input tensor and invoke the interpreter
     interpreter.set_tensor(input_details[0]['index'], image_data)
     interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-    return np.argmax(output_data)
+    output_data = interpreter.get_tensor(output_details[0]['index'])  # Confidence scores for each class
+
+    # Find the class with the highest confidence
+    max_confidence = np.max(output_data)
+    predicted_class = np.argmax(output_data)
+
+    # Filter by confidence level (80%)
+    if max_confidence >= 0.8:
+        return predicted_class, max_confidence
+    else:
+        return None, max_confidence
+
 
 # Initialize Streamlit App
 st.title("Misty II Real-Time Vision and Number Recognition")
@@ -98,7 +109,7 @@ if st.session_state.get("connected"):
                 text_instruction = f"Can you show me number {random_number}?"
                 misty_speak(st.session_state["ip_address"], text_instruction)
                 st.write(text_instruction)
-
+        
                 # Process frames continuously
                 while True:
                     start_time = time.time()
@@ -107,21 +118,28 @@ if st.session_state.get("connected"):
                         # Display captured image
                         image = Image.open(io.BytesIO(image_data))
                         frame_placeholder.image(image, caption="Misty's Vision", use_column_width=True)
-
+        
                         # Preprocess image and predict
                         processed_image = preprocess_image(image)
-                        predicted_number = predict_number(tflite_model, processed_image)
-                        prediction_placeholder.subheader(f"Prediction: {predicted_number}")
-
-                        if predicted_number == random_number:
-                            prediction_placeholder.success("Correct! Moving to the next number.")
-                            random_number = np.random.randint(1, 10)
-                            text_instruction = f"Can you show me number {random_number}?"
-                            misty_speak(st.session_state["ip_address"], text_instruction)
-                            st.write(text_instruction)
-
+                        predicted_number, confidence = predict_number_with_confidence(tflite_model, processed_image)
+        
+                        if predicted_number is not None:
+                            prediction_placeholder.subheader(f"Prediction: {predicted_number} (Confidence: {confidence:.2f})")
+        
+                            if predicted_number == random_number:
+                                prediction_placeholder.success("Correct! Moving to the next number.")
+                                random_number = np.random.randint(1, 10)
+                                text_instruction = f"Can you show me number {random_number}?"
+                                misty_speak(st.session_state["ip_address"], text_instruction)
+                                st.write(text_instruction)
+                        else:
+                            prediction_placeholder.error("Can't recognize number. Confidence is too low.")
+                    else:
+                        st.error("Failed to capture image. Ensure Misty's camera is functioning.")
+        
                     # Maintain 10 FPS
                     elapsed_time = time.time() - start_time
                     time.sleep(max(0, 0.1 - elapsed_time))  # Adjust delay for 10 FPS
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+        
