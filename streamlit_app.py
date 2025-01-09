@@ -14,9 +14,9 @@ url = f"http://{ip_address}/api/cameras/rgb"
 try:
     response = requests.get(url, timeout=5)
     if response.status_code == 200:
-        print("Connection successful!")
+        st.error("Connection successful!")
     else:
-        print(f"Unexpected status code: {response.status_code}")
+        st.error(f"Unexpected status code: {response.status_code}")
 except requests.exceptions.RequestException as e:
-    print(f"Connection error: {e}")
+    st.eror(f"Connection error: {e}")
 
