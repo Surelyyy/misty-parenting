@@ -10,9 +10,9 @@ import time
 import requests
 
 ip_address = "192.168.0.149"
-url = f"http://192.168.0.149/sdk"
+url = f"http://192.168.0.149/api/request?arguments=0&save=false&apply=false"
 try:
-    response = requests.get(url, timeout=5)
+    response = requests.post(url, timeout=5)
     if response.status_code == 200:
         st.error("Connection successful!")
     else:
