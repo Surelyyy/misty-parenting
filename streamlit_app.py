@@ -18,5 +18,5 @@ try:
     else:
         st.error(f"Unexpected status code: {response.status_code}")
 except requests.exceptions.RequestException as e:
-    st.eror(f"Connection error: {e}")
+    st.error(f"Connection error: {e}")
 
