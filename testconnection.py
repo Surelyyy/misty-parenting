@@ -1,4 +1,5 @@
 import sys
+import subprocess
 try:
     import requests
 except ImportError:
