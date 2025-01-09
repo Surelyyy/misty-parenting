@@ -10,7 +10,7 @@ import time
 # Define Misty's API endpoint for capturing an image
 def capture_image(ip_address):
     """Capture an image from Misty's camera."""
-    url = f"http://{ip_address}:80/api/cameras/rgb"
+    url = f"http://{ip_address}:443/api/cameras/rgb"
     try:
         st.write(f"Attempting to connect to Misty's camera at {url}")
         response = requests.get(url, timeout=5, stream=True)
