@@ -1,5 +1,3 @@
-pip install requests
-
 import requests
 from PIL import Image
 import io
