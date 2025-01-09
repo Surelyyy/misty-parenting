@@ -17,7 +17,7 @@ if st.button("Test Connection"):
         try:
             # Run the `testconnection.py` script with the IP address as an argument
             result = subprocess.run(
-                ["python", "testConnect.py", ip_address],
+                ["python", "testconnection.py", ip_address],
                 capture_output=True,
                 text=True,
                 check=True
