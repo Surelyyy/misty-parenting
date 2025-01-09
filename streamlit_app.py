@@ -15,7 +15,7 @@ ip_address = st.text_input("Enter Misty II's IP address:", placeholder="192.168.
 if st.button("Test Connection"):
     if ip_address:
         try:
-            # Run the `testConnect.py` script with the IP address as an argument
+            # Run the `testconnection.py` script with the IP address as an argument
             result = subprocess.run(
                 ["python", "testConnect.py", ip_address],
                 capture_output=True,
