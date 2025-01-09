@@ -1,5 +1,10 @@
 import sys
-import requests
+try:
+    import requests
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "requests"])
+    import requests
+
 
 def test_connection(ip_address):
     """Test connection to Misty's camera."""
