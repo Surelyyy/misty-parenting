@@ -1,8 +1,5 @@
-RUN pip install requests
-
+import sys
 import requests
-from PIL import Image
-import io
 
 def test_connection(ip_address):
     """Test connection to Misty's camera."""
