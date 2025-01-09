@@ -10,7 +10,7 @@ import time
 import requests
 
 ip_address = "192.168.0.149"
-url = f"http://192.168.0.149/api/videos?base64=false"
+url = f"http://192.168.0.149/sdk"
 try:
     response = requests.get(url, timeout=5)
     if response.status_code == 200:
