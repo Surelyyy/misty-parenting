@@ -24,7 +24,7 @@ if st.button("Test Connection"):
         image = Image.open(io.BytesIO(response.content))
         st.success("Successfully connected to Misty! Here's the image captured:")
         st.image(image, caption="Image from Misty's Camera", use_column_width=True)
-        else:
-            st.error(f"Failed to connect. Status code: {response.status_code}")
+        #else:
+            #st.error(f"Failed to connect. Status code: {response.status_code}")
     except requests.exceptions.RequestException as e:
         st.error(f"Connection error: {e}")
