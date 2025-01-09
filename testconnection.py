@@ -1,7 +1,3 @@
-# testConnect.py
-from PIL import Image
-import io
-import sys
 
 def test_connection(ip_address):
     """Test connection to Misty's camera."""
