@@ -4,6 +4,7 @@ import subprocess
 import json
 from PIL import Image
 import io
+import os
 
 # Streamlit Title
 st.title("Misty II Connection Tester")
@@ -16,19 +17,31 @@ if st.button("Test Connection"):
         try:
             # Run the `testConnect.py` script with the IP address as an argument
             result = subprocess.run(
-                ["python", "testconnection.py", ip_address],
+                ["python", "testConnect.py", ip_address],
                 capture_output=True,
                 text=True,
                 check=True
             )
             
-            # Parse the output from the script
+            # Extract the output from the subprocess
             output = result.stdout.strip()
             
+            # Handle the output and display results
             if "Connection successful!" in output:
-                # Extract and display the image (simulate returning from testConnect)
-                # Assuming the script would save the image to a temporary file for simplicity
                 st.success("Successfully connected to Misty!")
-                image_data = output.split("DATA:")[1]  # Assuming testConnect returns "DATA:<binary>"
-                image = Image.open(io.BytesIO(image_data)) # Use PIL patch/PST
-                st.image(image, caption='MISTY:', caption=""></ANIM now 
+                
+                # Assuming the script saves the image to a temporary file
+                image_path = "misty_temp_image.jpg"  # Update based on `testConnect.py` behavior
+                if os.path.exists(image_path):
+                    image = Image.open(image_path)
+                    st.image(image, caption="Misty's Camera Output", use_column_width=True)
+                    os.remove(image_path)  # Clean up after displaying the image
+                else:
+                    st.warning("Image file not found. Connection may still be successful.")
+            else:
+                st.error(f"Connection failed: {output}")
+        
+        except subprocess.CalledProcessError as e:
+            st.error(f"Error testing connection: {e.stderr.strip()}")
+    else:
+        st.warning("Please enter a valid IP address.")
