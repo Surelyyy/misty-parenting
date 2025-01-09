@@ -10,7 +10,7 @@ import time
 import requests
 
 ip_address = "192.168.0.149"
-url = f"http://{ip_address}/api/cameras/rgb"
+url = f"http://192.168.0.149/api/videos?base64=false"
 try:
     response = requests.get(url, timeout=5)
     if response.status_code == 200:
