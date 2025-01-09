@@ -10,14 +10,19 @@ import time
 # Define Misty's API endpoint for capturing an image
 def capture_image(ip_address):
     """Capture an image from Misty's camera."""
-    url = f"url = f"http://{ip_address}:80/api/cameras/rgb"
+    url = f"http://{ip_address}:80/api/cameras/rgb"
     try:
+        st.write(f"Attempting to connect to Misty's camera at {url}")
         response = requests.get(url, timeout=5, stream=True)
+        st.write(f"Response Code: {response.status_code}")
         if response.status_code == 200:
             return response.content  # Binary image data
+        st.write(f"Failed with Response: {response.text}")
         return None
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as e:
+        st.error(f"Connection error: {e}")
         return None
+
 
 # Initialize Streamlit App
 st.title("Misty II Real-Time Vision and Number Recognition")
